@@ -24,14 +24,14 @@
 
 import UIKit
 
-public protocol KDDragAndDropCollectionViewDataSource : UICollectionViewDataSource {
+public protocol KDDragAndDropCollectionViewDataSource: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, indexPathForDataItem dataItem: AnyObject) -> IndexPath?
     func collectionView(_ collectionView: UICollectionView, dataItemForIndexPath indexPath: IndexPath) -> AnyObject
     
-    func collectionView(_ collectionView: UICollectionView, moveDataItemFromIndexPath from: IndexPath, toIndexPath to : IndexPath) -> Void
-    func collectionView(_ collectionView: UICollectionView, insertDataItem dataItem : AnyObject, atIndexPath indexPath: IndexPath) -> Void
-    func collectionView(_ collectionView: UICollectionView, deleteDataItemAtIndexPath indexPath: IndexPath) -> Void
+    func collectionView(_ collectionView: UICollectionView, moveDataItemFromIndexPath from: IndexPath, toIndexPath to: IndexPath)
+    func collectionView(_ collectionView: UICollectionView, insertDataItem dataItem: AnyObject, atIndexPath indexPath: IndexPath)
+    func collectionView(_ collectionView: UICollectionView, deleteDataItemAtIndexPath indexPath: IndexPath)
     
     /* optional */ func collectionView(_ collectionView: UICollectionView, cellIsDraggableAtIndexPath indexPath: IndexPath) -> Bool
     /* optional */ func collectionView(_ collectionView: UICollectionView, cellIsDroppableAtIndexPath indexPath: IndexPath) -> Bool
@@ -57,10 +57,10 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         super.init(coder: aDecoder)
     }
     
-    public var draggingPathOfCellBeingDragged : IndexPath?
+    public var draggingPathOfCellBeingDragged: IndexPath?
     
-    var iDataSource : UICollectionViewDataSource?
-    var iDelegate : UICollectionViewDelegate?
+    var iDataSource: UICollectionViewDataSource?
+    var iDelegate: UICollectionViewDelegate?
     
     override open func awakeFromNib() {
         super.awakeFromNib()
@@ -72,8 +72,8 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
     }
     
     
-    // MARK : KDDraggable
-    public func canDragAtPoint(_ point : CGPoint) -> Bool {
+    // MARK: KDDraggable
+    public func canDragAtPoint(_ point: CGPoint) -> Bool {
         if let dataSource = self.dataSource as? KDDragAndDropCollectionViewDataSource,
             let indexPathOfPoint = self.indexPathForItem(at: point) {
             return dataSource.collectionView(self, cellIsDraggableAtIndexPath: indexPathOfPoint)
@@ -82,7 +82,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         return false
     }
     
-    public func representationImageAtPoint(_ point : CGPoint) -> UIView? {
+    public func representationImageAtPoint(_ point: CGPoint) -> UIView? {
         
         guard let indexPath = self.indexPathForItem(at: point) else {
             return nil
@@ -110,7 +110,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         return dataSource.collectionView(self, stylingRepresentationView: view)
     }
     
-    public func dataItemAtPoint(_ point : CGPoint) -> AnyObject? {
+    public func dataItemAtPoint(_ point: CGPoint) -> AnyObject? {
         
         guard let indexPath = self.indexPathForItem(at: point) else {
             return nil
@@ -122,10 +122,9 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
         return dragDropDS.collectionView(self, dataItemForIndexPath: indexPath)
     }
+        
     
-    
-    
-    public func startDraggingAtPoint(_ point : CGPoint) -> Void {
+    public func startDraggingAtPoint(_ point: CGPoint) {
         
         self.draggingPathOfCellBeingDragged = self.indexPathForItem(at: point)
         
@@ -133,7 +132,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
     }
     
-    public func stopDragging() -> Void {
+    public func stopDragging() {
         
         if let idx = self.draggingPathOfCellBeingDragged {
             if let cell = self.cellForItem(at: idx) {
@@ -147,7 +146,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
     }
     
-    public func dragDataItem(_ item : AnyObject) -> Void {
+    public func dragDataItem(_ item: AnyObject) {
         
         guard let dragDropDataSource = self.dataSource as? KDDragAndDropCollectionViewDataSource else {
             return
@@ -162,13 +161,12 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
         if self.animating {
             self.deleteItems(at: [existngIndexPath])
-        }
-        else {
+        } else {
             
             self.animating = true
             self.performBatchUpdates({ () -> Void in
                 self.deleteItems(at: [existngIndexPath])
-            }, completion: { complete -> Void in
+            }, completion: { _ in
                 self.animating = false
                 self.reloadData()
             })
@@ -176,17 +174,17 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
     }
     
-    // MARK : KDDroppable
+    // MARK: KDDroppable
     
-    public func canDropAtRect(_ rect : CGRect) -> Bool {
+    public func canDropAtRect(_ rect: CGRect) -> Bool {
         
         return (self.indexPathForCellOverlappingRect(rect) != nil)
     }
     
-    public func indexPathForCellOverlappingRect( _ rect : CGRect) -> IndexPath? {
+    public func indexPathForCellOverlappingRect( _ rect: CGRect) -> IndexPath? {
         
-        var overlappingArea : CGFloat = 0.0
-        var cellCandidate : UICollectionViewCell?
+        var overlappingArea: CGFloat = 0.0
+        var cellCandidate: UICollectionViewCell?
         let dataSource = self.dataSource as? KDDragAndDropCollectionViewDataSource
         
         
@@ -227,14 +225,12 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
     }
     
     
-    fileprivate var currentInRect : CGRect?
-    public func willMoveItem(_ item : AnyObject, inRect rect : CGRect) -> Void {
-        
-        let dragDropDataSource = self.dataSource as! KDDragAndDropCollectionViewDataSource // its guaranteed to have a data source
-        
-        if let _ = dragDropDataSource.collectionView(self, indexPathForDataItem: item) { // if data item exists
-            return
-        }
+    fileprivate var currentInRect: CGRect?
+    public func willMoveItem(_ item: AnyObject, inRect rect: CGRect) {
+        // its guaranteed to have a data source
+        guard let dragDropDataSource = self.dataSource as? KDDragAndDropCollectionViewDataSource else { return }
+        // if data item exists
+        if dragDropDataSource.collectionView(self, indexPathForDataItem: item) != nil { return }
         
         if let indexPath = self.indexPathForCellOverlappingRect(rect) {
             
@@ -248,7 +244,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
                 
                 self.insertItems(at: [indexPath])
                 
-            }, completion: { complete -> Void in
+            }, completion: { _ in
                 
                 self.animating = false
                 
@@ -267,21 +263,23 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
     }
     
-    public var isHorizontal : Bool {
+    public var isHorizontal: Bool {
         return (self.collectionViewLayout as? UICollectionViewFlowLayout)?.scrollDirection == .horizontal
     }
     
     public var animating: Bool = false
     
-    public var paging : Bool = false
-    func checkForEdgesAndScroll(_ rect : CGRect) -> Void {
+    public var paging: Bool = false
+    
+    // swiftlint:disable:next cyclomatic_complexity
+    func checkForEdgesAndScroll(_ rect: CGRect) {
         
         if paging == true {
             return
         }
         
-        let currentRect : CGRect = CGRect(x: self.contentOffset.x, y: self.contentOffset.y, width: self.bounds.size.width, height: self.bounds.size.height)
-        var rectForNextScroll : CGRect = currentRect
+        let currentRect: CGRect = CGRect(x: self.contentOffset.x, y: self.contentOffset.y, width: self.bounds.size.width, height: self.bounds.size.height)
+        var rectForNextScroll: CGRect = currentRect
         
         if isHorizontal {
             
@@ -293,8 +291,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
                 if rectForNextScroll.origin.x < 0 {
                     rectForNextScroll.origin.x = 0
                 }
-            }
-            else if rect.intersects(rightBoundary) == true {
+            } else if rect.intersects(rightBoundary) == true {
                 rectForNextScroll.origin.x += self.bounds.size.width * 0.5
                 if rectForNextScroll.origin.x > self.contentSize.width - self.bounds.size.width {
                     rectForNextScroll.origin.x = self.contentSize.width - self.bounds.size.width
@@ -311,8 +308,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
                 if rectForNextScroll.origin.y < 0 {
                     rectForNextScroll.origin.y = 0
                 }
-            }
-            else if rect.intersects(bottomBoundary) == true {
+            } else if rect.intersects(bottomBoundary) == true {
                 rectForNextScroll.origin.y += self.bounds.size.height * 0.5
                 if rectForNextScroll.origin.y > self.contentSize.height - self.bounds.size.height {
                     rectForNextScroll.origin.y = self.contentSize.height - self.bounds.size.height
@@ -334,9 +330,9 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
     }
     
-    public func didMoveItem(_ item : AnyObject, inRect rect : CGRect) -> Void {
-        
-        let dragDropDS = self.dataSource as! KDDragAndDropCollectionViewDataSource // guaranteed to have a ds
+    public func didMoveItem(_ item: AnyObject, inRect rect: CGRect) {
+        // guaranteed to have a ds
+        guard let dragDropDS = self.dataSource as? KDDragAndDropCollectionViewDataSource else { return }
         
         if  let existingIndexPath = dragDropDS.collectionView(self, indexPathForDataItem: item),
             let indexPath = self.indexPathForCellOverlappingRect(rect) {
@@ -349,7 +345,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
                 
                 self.performBatchUpdates({ () -> Void in
                     self.moveItem(at: existingIndexPath, to: indexPath)
-                }, completion: { (finished) -> Void in
+                }, completion: { _ in
                     self.animating = false
                     self.reloadData()
                     
@@ -374,7 +370,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
     }
     
-    public func didMoveOutItem(_ item : AnyObject) -> Void {
+    public func didMoveOutItem(_ item: AnyObject) {
         
         guard let dragDropDataSource = self.dataSource as? KDDragAndDropCollectionViewDataSource,
             let existngIndexPath = dragDropDataSource.collectionView(self, indexPathForDataItem: item) else {
@@ -386,13 +382,12 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
         
         if self.animating {
             self.deleteItems(at: [existngIndexPath])
-        }
-        else {
+        } else {
             self.animating = true
             self.performBatchUpdates({ () -> Void in
                 self.deleteItems(at: [existngIndexPath])
-            }, completion: { (finished) -> Void in
-                self.animating = false;
+            }, completion: { _ in
+                self.animating = false
                 self.reloadData()
             })
             
@@ -410,7 +405,7 @@ open class KDDragAndDropCollectionView: UICollectionView, KDDraggable, KDDroppab
     }
     
     
-    public func dropDataItem(_ item : AnyObject, atRect : CGRect) -> Void {
+    public func dropDataItem(_ item: AnyObject, atRect: CGRect) {
         
         // show hidden cell
         if  let index = draggingPathOfCellBeingDragged,

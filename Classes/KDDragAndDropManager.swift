@@ -25,47 +25,47 @@
 import UIKit
 
 public protocol KDDraggable {
-    func canDragAtPoint(_ point : CGPoint) -> Bool
-    func representationImageAtPoint(_ point : CGPoint) -> UIView?
+    func canDragAtPoint(_ point: CGPoint) -> Bool
+    func representationImageAtPoint(_ point: CGPoint) -> UIView?
     func stylingRepresentationView(_ view: UIView) -> UIView?
-    func dataItemAtPoint(_ point : CGPoint) -> AnyObject?
-    func dragDataItem(_ item : AnyObject) -> Void
+    func dataItemAtPoint(_ point: CGPoint) -> AnyObject?
+    func dragDataItem(_ item: AnyObject)
     
-    /* optional */ func startDraggingAtPoint(_ point : CGPoint) -> Void
-    /* optional */ func stopDragging() -> Void
+    /* optional */ func startDraggingAtPoint(_ point: CGPoint)
+    /* optional */ func stopDragging()
 }
 
 extension KDDraggable {
-    public func startDraggingAtPoint(_ point : CGPoint) -> Void {}
-    public func stopDragging() -> Void {}
+    public func startDraggingAtPoint(_ point: CGPoint) {}
+    public func stopDragging() {}
 }
 
 
 public protocol KDDroppable {
-    func canDropAtRect(_ rect : CGRect) -> Bool
-    func willMoveItem(_ item : AnyObject, inRect rect : CGRect) -> Void
-    func didMoveItem(_ item : AnyObject, inRect rect : CGRect) -> Void
-    func didMoveOutItem(_ item : AnyObject) -> Void
-    func dropDataItem(_ item : AnyObject, atRect : CGRect) -> Void
+    func canDropAtRect(_ rect: CGRect) -> Bool
+    func willMoveItem(_ item: AnyObject, inRect rect: CGRect)
+    func didMoveItem(_ item: AnyObject, inRect rect: CGRect)
+    func didMoveOutItem(_ item: AnyObject)
+    func dropDataItem(_ item: AnyObject, atRect: CGRect)
 }
 
 public class KDDragAndDropManager: NSObject, UIGestureRecognizerDelegate {
     
-    fileprivate var canvas : UIView = UIView()
-    fileprivate var views : [UIView] = []
+    fileprivate var canvas: UIView = UIView()
+    fileprivate var views: [UIView] = []
     fileprivate var longPressGestureRecogniser = UILongPressGestureRecognizer()
     
     
     struct Bundle {
-        var offset : CGPoint = CGPoint.zero
-        var sourceDraggableView : UIView
-        var overDroppableView : UIView?
-        var representationImageView : UIView
-        var dataItem : AnyObject
+        var offset: CGPoint = CGPoint.zero
+        var sourceDraggableView: UIView
+        var overDroppableView: UIView?
+        var representationImageView: UIView
+        var dataItem: AnyObject
     }
-    var bundle : Bundle?
+    var bundle: Bundle?
     
-    public init(canvas : UIView, collectionViews : [UIView]) {
+    public init(canvas: UIView, collectionViews: [UIView]) {
         
         super.init()
         
@@ -83,9 +83,9 @@ public class KDDragAndDropManager: NSObject, UIGestureRecognizerDelegate {
         
         guard gestureRecognizer.state == .possible else { return false }
         
-        for view in self.views where view is KDDraggable  {
+        for view in self.views where view is KDDraggable {
             
-            let draggable = view as! KDDraggable
+            let draggable = view as! KDDraggable    // swiftlint:disable:this force_cast
             
             let touchPointInView = touch.location(in: view)
             
@@ -108,9 +108,9 @@ public class KDDragAndDropManager: NSObject, UIGestureRecognizerDelegate {
                 self.bundle = Bundle(
                     offset: offset,
                     sourceDraggableView: view,
-                    overDroppableView : view is KDDroppable ? view : nil,
+                    overDroppableView: view is KDDroppable ? view : nil,
                     representationImageView: representation,
-                    dataItem : dataItem
+                    dataItem: dataItem
                 )
                 
                 return true
@@ -123,33 +123,34 @@ public class KDDragAndDropManager: NSObject, UIGestureRecognizerDelegate {
         
     }
     
-    @objc public func updateForLongPress(_ recogniser : UILongPressGestureRecognizer) -> Void {
+    // swiftlint:disable:next cyclomatic_complexity
+    @objc public func updateForLongPress(_ recogniser: UILongPressGestureRecognizer) {
         
         guard let bundle = self.bundle else { return }
         
         let pointOnCanvas = recogniser.location(in: self.canvas)
-        let sourceDraggable : KDDraggable = bundle.sourceDraggableView as! KDDraggable
+        let sourceDraggable: KDDraggable = bundle.sourceDraggableView as! KDDraggable   // swiftlint:disable:this force_cast
         let pointOnSourceDraggable = recogniser.location(in: bundle.sourceDraggableView)
         
         switch recogniser.state {
             
             
-        case .began :
+        case .began:
             self.canvas.addSubview(bundle.representationImageView)
             sourceDraggable.startDraggingAtPoint(pointOnSourceDraggable)
             
-        case .changed :
+        case .changed:
             
             // Update the frame of the representation image
             var repImgFrame = bundle.representationImageView.frame
-            repImgFrame.origin = CGPoint(x: pointOnCanvas.x - bundle.offset.x, y: pointOnCanvas.y - bundle.offset.y);
+            repImgFrame.origin = CGPoint(x: pointOnCanvas.x - bundle.offset.x, y: pointOnCanvas.y - bundle.offset.y)
             bundle.representationImageView.frame = repImgFrame
             
             var overlappingAreaMAX: CGFloat = 0.0
             
             var mainOverView: UIView?
             
-            for view in self.views where view is KDDraggable  {
+            for view in self.views where view is KDDraggable {
                 
                 let viewFrameOnCanvas = self.convertRectToCanvas(view.frame, fromView: view)
                 
@@ -176,7 +177,6 @@ public class KDDragAndDropManager: NSObject, UIGestureRecognizerDelegate {
             }
             
             
-            
             if let droppable = mainOverView as? KDDroppable {
                 
                 let rect = self.canvas.convert(bundle.representationImageView.frame, to: mainOverView)
@@ -185,7 +185,7 @@ public class KDDragAndDropManager: NSObject, UIGestureRecognizerDelegate {
                     
                     if mainOverView != bundle.overDroppableView { // if it is the first time we are entering
                         
-                        (bundle.overDroppableView as! KDDroppable).didMoveOutItem(bundle.dataItem)
+                        (bundle.overDroppableView as! KDDroppable).didMoveOutItem(bundle.dataItem)  // swiftlint:disable:this force_cast
                         droppable.willMoveItem(bundle.dataItem, inRect: rect)
                     }
                     
@@ -198,7 +198,7 @@ public class KDDragAndDropManager: NSObject, UIGestureRecognizerDelegate {
             }
             
             
-        case .ended :
+        case .ended:
             
             if bundle.sourceDraggableView != bundle.overDroppableView { // if we are actually dropping over a new view.
                 
@@ -224,7 +224,7 @@ public class KDDragAndDropManager: NSObject, UIGestureRecognizerDelegate {
     }
     
     // MARK: Helper Methods
-    func convertRectToCanvas(_ rect : CGRect, fromView view : UIView) -> CGRect {
+    func convertRectToCanvas(_ rect: CGRect, fromView view: UIView) -> CGRect {
         
         var r = rect
         var v = view
@@ -251,17 +251,16 @@ extension CGRect: Comparable {
         return self.size.width * self.size.height
     }
     
-    public static func <=(lhs: CGRect, rhs: CGRect) -> Bool {
+    public static func <= (lhs: CGRect, rhs: CGRect) -> Bool {
         return lhs.area <= rhs.area
     }
-    public static func <(lhs: CGRect, rhs: CGRect) -> Bool {
+    public static func < (lhs: CGRect, rhs: CGRect) -> Bool {
         return lhs.area < rhs.area
     }
-    public static func >(lhs: CGRect, rhs: CGRect) -> Bool {
+    public static func > (lhs: CGRect, rhs: CGRect) -> Bool {
         return lhs.area > rhs.area
     }
-    public static func >=(lhs: CGRect, rhs: CGRect) -> Bool {
+    public static func >= (lhs: CGRect, rhs: CGRect) -> Bool {
         return lhs.area >= rhs.area
     }
 }
-
